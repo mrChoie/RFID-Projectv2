@@ -28,7 +28,9 @@
 #define withdrawBtn 2
 #define depositBtn  3
 #define infoBtn     4
+#define buzzerPin   6
 #define insrtDetect A0
+#define tone1 1200
 
 #define RST_PIN         9           // Configurable, see typical pin layout above
 #define SS_PIN          10          // Configurable, see typical pin layout above
@@ -78,13 +80,30 @@ void loop() {
   lightSensorVal = map(analogRead(insrtDetect), 0, 550, 0, 8);
   if (lightSensorVal<4) {                     // Do function if card is inserted/reader is active
     readerActive();
+    if (insertStatus==1){
+        tone(buzzerPin, 1000);
+        delay(90);
+        tone(buzzerPin, 2500);
+        delay(160);
+        tone(buzzerPin, 2500);
+        delay(110);
+        noTone(buzzerPin);
+      }
   } else if ( digitalRead(withdrawBtn)==1||   // alert if user try to do function but
               digitalRead(depositBtn)==1||    // card is inserted/reader is inactive
               digitalRead(infoBtn)==1){
-    insertAlert();
+      if (insertStatus==0){
+        tone(buzzerPin, 2500);
+        delay(100);
+        tone(buzzerPin, 1000);
+        delay(150);
+        noTone(buzzerPin);
+      }
+      insertAlert();
   } else {
     lcd.clear();
   }
+  insertStatus=0;
 
   // Prepare key - all keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
   MFRC522::MIFARE_Key key;
@@ -118,7 +137,7 @@ void loop() {
   String firstName =" ", lastName =" ";
   String currentCard;
   bool nameSaved;
-
+  insertStatus=1;
   
   
   
@@ -281,6 +300,7 @@ void insertAlert(){
   lcd.print("Insert card");
   lcd.setCursor(5,1);
   lcd.print("first");
+  insertStatus=0;
   delay(1000);
 }
 
@@ -306,14 +326,39 @@ void displayLCD(int accIndex){
   if (lightSensorVal<3){
     //Serial.println("Display lcd");
     lcd.clear();
-    lcd.setCursor(0,0);lcd.print("Card Detected");delay(1000);
-    lcd.setCursor(0,0);lcd.print("Getting Info.  ");delay(200);
-    lcd.setCursor(0,0);lcd.print("Getting Info.. ");delay(200);
-    lcd.setCursor(0,0);lcd.print("Getting Info...");delay(200);
-    lcd.setCursor(0,0);lcd.print("Getting Info.  ");delay(200);
-    lcd.setCursor(0,0);lcd.print("Getting Info.. ");delay(200);
-    lcd.setCursor(0,0);lcd.print("Getting Info...");delay(200);
+    lcd.setCursor(0,0);lcd.print("Card Detected");
+    tone(buzzerPin, 1000);
+    delay(100);
+    noTone(buzzerPin);
+    delay(1000);
+    lcd.setCursor(0,0);lcd.print("Getting Info.  ");
+    tone(buzzerPin, tone1);
+    delay(50);
+    noTone(buzzerPin);delay(210);
+    lcd.setCursor(0,0);lcd.print("Getting Info.. ");
+    tone(buzzerPin, tone1);
+    delay(50);
+    noTone(buzzerPin);delay(210);
+    lcd.setCursor(0,0);lcd.print("Getting Info...");
+    tone(buzzerPin, tone1);
+    delay(50);
+    noTone(buzzerPin);delay(210);
+    lcd.setCursor(0,0);lcd.print("Getting Info.  ");
+    tone(buzzerPin, tone1);
+    delay(50);
+    noTone(buzzerPin);delay(210);
+    lcd.setCursor(0,0);lcd.print("Getting Info.. ");
+    tone(buzzerPin, tone1);
+    delay(50);
+    noTone(buzzerPin);delay(210);
+    lcd.setCursor(0,0);lcd.print("Getting Info...");
+    tone(buzzerPin, tone1);
+    delay(50);
+    noTone(buzzerPin);delay(210);
     lcd.setCursor(0,0);lcd.clear();
+    tone(buzzerPin, 1000);
+    delay(100);
+    noTone(buzzerPin);
     lcd.print(Account[accIndex].cardOwner);
     if (Account[accIndex].cardBalance>0){
       lcd.setCursor(0,1);lcd.print("Balance: $");
@@ -322,7 +367,7 @@ void displayLCD(int accIndex){
       lcd.setCursor(9,1);lcd.print(Account[accIndex].cardBalance);
       lcd.setCursor(0,1);lcd.print("Balance:-$");
     }
-    
+    insertStatus=0;
     // Serial.print("\n\nID: \t\t");
     // Serial.print(Account[accIndex].cardUID);
     // Serial.print("\nName: \t\t");
@@ -376,4 +421,6 @@ void displayInfo(){
     lcd.setCursor(9,1);lcd.print(Account[accIndex].cardBalance);
     lcd.setCursor(0,1);lcd.print("Balance:-$");
   }
+  mfrc522.PICC_HaltA();
+  mfrc522.PCD_StopCrypto1();
 }
