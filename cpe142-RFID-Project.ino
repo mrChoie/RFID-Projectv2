@@ -105,18 +105,16 @@ void loop() {
   if ( ! mfrc522.PICC_ReadCardSerial()) {
     return;// <------- this is resets the loop back to the top
   } 
-  //-----------------------------------------------------------------------------------------------------
-  //---------   statements below this line are executed when above statement is false    -----------------
-  //-----------------------------------------------------------------------------------------------------
+  //--------------------------------------------------------------------------------------------------------
+  //-----   statements below this line are executed when the statement at line:105 returns false    --------
+  //-----   At this point, mfrc522.uid structure is filled with the card's data to be used in the code   ---
  
-  int sizeofCurrUID = mfrc522.uid.size;       // For loop counter
+  int sizeofCurrUID = mfrc522.uid.size; // For loop counter
   
-  String firstName =" ", lastName =" ";
-  String currentCard;
+  String firstName =" ", lastName =" "; // Declare new variables every
+  String currentCard;                   // time a card is read successfully
   bool nameSaved;
   insertStatus=1;
-  
-  
   
   // Access card uid from buffer array and save as currentCard string value 
   for (int i = 0; i < sizeofCurrUID; i++){
@@ -139,20 +137,15 @@ void loop() {
     }
   }
   
-  //vvvvvvvvvvvvvvvvvvvvvvvvvvvvv  Get first name from card  vvvvvvvvvvvvvvvvvvvvvvvvvvvvv//
-  byte buffer1[18];
-  block = 4;
+  byte buffer1[18]; // for first name
+  byte buffer2[18]; // for last name
   len = 18;
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 4, &key, &(mfrc522.uid));
-  if (status != MFRC522::STATUS_OK) {
+  //--------- Assuming the current card has stored data at block 4 (the owner's first name) ----
+  //--------- The data at block 4 will be saved into buffer1    --------------------------------
+  block = 4;
+  if (!readRFIDBlock(block, buffer1, len)) {
     return;
   }
-  status = mfrc522.MIFARE_Read(block, buffer1, &len);
-  if (status != MFRC522::STATUS_OK) {
-    return;
-  }
-
-  //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^//
   // Store the fetched first name from buffer1 array into cardOwner--member of stucture Account[accIndex]
   for (int i = 0; i < 16; i++){
     if (nameSaved){
@@ -161,24 +154,18 @@ void loop() {
       }
     }
   }
-  //vvvvvvvvvvvvvvvvvvvvvvvvvvvvv  Get last name from card  vvvvvvvvvvvvvvvvvvvvvvvvvvvvv//
-  byte buffer2[18];
+  
+  //--------- Assuming the current card has stored data at block 1 (the owner's last name) ----
+  //--------- The data at block 1 will be saved into buffer2    -------------------------------
   block = 1;
-
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 1, &key, &(mfrc522.uid));
-  if (status != MFRC522::STATUS_OK) {
+  if (!readRFIDBlock(block, buffer2, len)) {
     return;
   }
-  status = mfrc522.MIFARE_Read(block, buffer2, &len);
-  if (status != MFRC522::STATUS_OK) {
-    return;
-  }
-
-  //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^//
+  
   // Store the fetched last name from buffer2 array into cardOwner--member of stucture Account[accIndex]
   for (int i = 0; i < 16; i++){
     if (nameSaved){
-      if (i==0){
+      if (i == 0){
         Account[accIndex].cardOwner += " ";
       }
       if (buffer2[i] != 32 && buffer2[i] != 10){
@@ -197,6 +184,21 @@ void loop() {
 //--------  End of main loop  --------------------------------------------------------------
 //------------------------------------------------------------------------------------------
 
+bool readRFIDBlock(byte block, byte* buffer, byte &len) {
+  //--------- Authentication in reading memory blocks of the current card
+  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
+  if (status != MFRC522::STATUS_OK) {
+    return false;
+  }
+  status = mfrc522.MIFARE_Read(block, buffer, &len); // buffer array is pass-by-refence by default
+  if (status != MFRC522::STATUS_OK) {                // buffer is modified when 'reading' is successful
+    return false;
+  }
+  return true;
+}
+
+//*****************************************************************************************//
+
 void insertAlert(){
   lcd.clear();
   lcd.setCursor(2,0);
@@ -206,6 +208,8 @@ void insertAlert(){
   insertStatus=0;
   delay(1000);
 }
+
+//*****************************************************************************************//
 
 void readerActive(){
   if (digitalRead(withdrawBtn)==1){
@@ -318,4 +322,5 @@ void displayInfo(){
   }
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();
+
 }
