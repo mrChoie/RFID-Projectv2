@@ -1,9 +1,9 @@
-# Simple Arduino Project - RFID Card reading
+## Simple Arduino Project - RFID Card reading
 NOTE: code is only applicable for RFID cards containing datas of First Name and Last Name located at block 4 & 1, respectively.
-
-### Main Concept:
+---
+#### Main Concept:
 This project shows the technical perspective of Bank Cards/ATMs in the simplest form
-### Flow:
+#### Flow:
 - Firstly, the RFID must contain the card owner's UUID and Name data, then
 - The RFID waits for card presence
   - The waiting state ignores button-press events
@@ -17,8 +17,12 @@ This project shows the technical perspective of Bank Cards/ATMs in the simplest 
   - Note: Buttons are just used as +(increment) & -(decrement) for the balance value
   - Card balance is stored in the Arduino, not in the card itself.
 - Upon removal of the card, the system returns to waiting state.
+---
+Libraries used:
+- LiquidCrystal_I2C
+- MFRC522
 
-### Hardware Roles
+#### Hardware Roles
 📡 RFID Reader
 Used to:
 - Detect card presence
@@ -37,5 +41,5 @@ Incrementing/Decrementing card balance
 🔊 Buzzer
 Used for:
 Sound queues
-
+---
 I'm unable to provide a diagram of the circuit since this project was archived a long time ago. But the RFID reader and LCD-i2c components should have used their default pin location, just like any of its use cases.
